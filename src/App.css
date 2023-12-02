@@ -1,0 +1,166 @@
+.App {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Viewport height */
+  text-align: center;
+}
+html, body {
+  background-image: url(https://previews.123rf.com/images/koksikoks/koksikoks1612/koksikoks161200003/68719800-fortune-wheel-background-square-background-with-segments-of-the-wheel-fotrune-in-a-circle-a-vector.jpg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 100%;
+  margin: 0;
+}
+
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.phrase {
+  font-size: 1.5rem;
+  margin: 20px;
+}
+
+.previous-guesses {
+  color: black !important;
+  font-size: 1.2rem;
+}
+
+input {
+  font-size: 1.2rem;
+  margin: 10px;
+  width: 2rem;
+}
+
+.wrong-guesses {
+  color: red;
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.win-message {
+  font-size: 1.5rem;
+  color: green;
+  margin: 20px;
+}
+
+.lose-message {
+  font-size: 1.5rem;
+  color: red;
+  margin: 20px;
+}
+
+button {
+  font-size: 1.2rem;
+}
+
+/* Apply some basic resets */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Basic styling for the app */
+.App {
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Styling the title */
+h1 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+/* Style the phrase with larger text for better visibility */
+.phrase {
+  font-size: 2em;
+  letter-spacing: 5px;
+  margin-bottom: 20px;
+}
+
+/* Style the input box */
+input[type='text'] {
+  font-size: 1em;
+  padding: 10px;
+  margin-bottom: 20px;
+  width: 50px;
+  text-align: center;
+}
+
+/* Style for the div containing previous guesses */
+
+
+/* Style for displaying the number of wrong guesses */
+
+
+/* Style for the end game messages */
+.end-game-message {
+  margin-top: 20px;
+}
+
+
+
+/* Style the 'New Game' button */
+button {
+  background-color: #0275d8; /* Bootstrap's 'btn-primary' color */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* Button hover effect */
+button:hover {
+  background-color: #025aa5; /* A darker shade for the button */
+}
+
+.wofButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Viewport height */
+  text-align: center;
+  width: 100%;
+    
+}
+.record-item {
+  background-color: #ffffff;
+  padding: 20px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  transition: transform 0.3s ease;
+}
+
+.record-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.record-item h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 22px;
+  color: #333;
+}
+
+.record-item p {
+  margin: 4px 0;
+  font-size: 16px;
+  color: #555;
+}
+
+/* dsdasdast */
