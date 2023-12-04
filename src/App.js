@@ -7,13 +7,6 @@ import { getAuth, signInWithRedirect, GoogleAuthProvider } from "firebase/auth";
 
 
 function App() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [userId, setUserId] = useState("");
-  const [pageNo, setPageNo] = useState(0);
-  const [records, setRecords] = useState([]);
-  const [userRecords, setUserRecords] = useState([]);
-
   const [phrases] = useState([
     "Change the world from here",
     "Be the change you wish to see",
@@ -22,11 +15,16 @@ function App() {
   const [phrase, setPhrase] = useState("");
   const [hiddenPhrase, setHiddenPhrase] = useState("");
   const [previousGuesses, setPreviousGuesses] = useState("");
-  const [maxGuesses] = useState(1);
+  const [maxGuesses] = useState(5);
   const [wrongGuesses, setWrongGuesses] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [solved, setSolved] = useState(false);
-  const [handle, setHandle] = useState("");
+  const [userName, setUserName] = useState("");
+  const [userId, setUserId] = useState("");
+  const [CurrentPage, setCurrentPage] = useState(0);
+  const [allGameRecord, setAllGameRecord] = useState([]);
+  const [currentUserRecords, setCurrentUserRecords] = useState([]);
+
 
   const firebaseConfig = {
     apiKey: "AIzaSyCfndJ5pcN5lfzyyTxlT0WbyBCTV0ktncM",
@@ -67,22 +65,24 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  function displayAllRecords() {
+  function showAllGameRecords() {
     axios
       .get("https://gamerecords-405919.wn.r.appspot.com/findAllGameRecord")
       .then((response) => {
-        setRecords(response.data);
+        const sortedData = response.data.sort((a, b) => b.score - a.score);
+        setAllGameRecord(sortedData);
         console.log(response);
       })
       .catch((error) => {
         console.log(error);
       });
   }
-  function displayAllUserRecords() {
+
+  function showCurrentUserRecord() {
     axios
       .get("https://gamerecords-405919.wn.r.appspot.com/findAllUserRecord")
       .then((response) => {
-        setUserRecords(response.data);
+        setCurrentUserRecords(response.data);
         console.log(response);
       })
       .catch((error) => {
@@ -134,20 +134,50 @@ function App() {
 
     setPreviousGuesses(previousGuesses + guess.toLowerCase() + ",");
   };
-  const handleNameChange = (event) => {
-    setHandle(event.target.value);
+  const userNameNameChange = (event) => {
+    setUserName(event.target.value);
   };
-  const handleSubmitName = () => {
-    setPageNo(3)
-    displayAllRecords();
-    displayAllUserRecords();
-    console.log(records);
+  const userNameSubmitName = () => {
+    const postData = {
+      handle: userName,
+      userId: userId,
+      score: maxGuesses - wrongGuesses,
+      date: new Date().toLocaleString(), 
+    }
+    const postDataTwo = {
+      userId: userId,
+      score: maxGuesses - wrongGuesses,
+      date: new Date().toLocaleString(), 
+    }
 
-    
-    
-    
+    axios.post('https://gamerecords-405919.wn.r.appspot.com/saveUserRecord', postData)
+    .then(response => {
+      console.log('Data posted successfully:', response.data)
+    }).catch(error => {
+      console.error('Error posting data:', error);
+    })
+    axios.post('https://gamerecords-405919.wn.r.appspot.com/saveGameRecord', postDataTwo)
+    .then(response => {
+      console.log('Data posted successfully:', response.data)
+    }).catch(error => {
+      console.error('Error posting data:', error);
+    }) 
+    setCurrentPage(5)
+    showAllGameRecords();
+    showCurrentUserRecord();
+    console.log(allGameRecord);
+
   };
-
+  const handleDelete = async (recordId) => {
+    try {
+      const response = await axios.delete(`https://gamerecords-405919.wn.r.appspot.com/deleteUserRecord`, { params: { id: recordId } });
+      console.log(response.data);
+      // Add your logic to handle the UI update or state change after deletion
+    } catch (error) {
+      console.error("Error deleting record: ", error);
+      // Handle error
+    }
+  };
 
   // Function to start a new game
   const newGame = () => {
@@ -157,8 +187,7 @@ function App() {
     setWrongGuesses(0);
     setGameOver(false);
     setSolved(false);
-
-    // Select a random phrase from the provided phrases
+    setCurrentPage(0);
     const randomIndex = Math.floor(Math.random() * phrases.length);
     setPhrase(phrases[randomIndex]);
     generateHiddenPhrase(phrases[randomIndex]);
@@ -203,46 +232,53 @@ function App() {
             </div>
           ) : (
             <div className="end-game-message">
-              {solved && pageNo === 0 && (<div className="win-message">YOU WON!!</div>)}
-              {!solved && pageNo === 0 && (<div className="lose-message">Game Over!</div>)}
-              {pageNo === 0 && (
+              {solved && CurrentPage === 0 && (<div className="win-message">YOU WON!!</div>)}
+              {!solved && CurrentPage === 0 && (<div className="lose-message">Game Over!</div>)}
+              {CurrentPage === 0 && (
                 <div>
                   <p>do you want to save your game record?</p>
-                  <button type="button" onClick={() => { setPageNo(2)}}> Yes </button>
-                  <button type="button" onClick={() => {setPageNo(1)}}> No </button>
+                  <button type="button" onClick={() => { setCurrentPage(2)}}> Yes </button>
+                  <button type="button" onClick={() => {setCurrentPage(1)}}> No </button>
                 </div>
               )}
-              {pageNo === 1 && <button onClick={newGame}>New Game</button>}
+              {CurrentPage === 1 && <button onClick={newGame}>New Game</button>}
 
-              {pageNo === 2 && <div>
+              {CurrentPage === 2 && <div>
         <label htmlFor="nameInput">Enter your name:</label>
         <input
           type="text"
           id="nameInput"
-          value={handle}
-          onChange={handleNameChange}
+          value={userName}
+          onChange={userNameNameChange}
         />
-        <button type="button" onClick={handleSubmitName}>Submit Name</button>
+        <button type="button" onClick={userNameSubmitName}>Submit Name</button>
       </div>}
+      {CurrentPage === 5 && (<div>
+                  <p>do you want to view your record or all??</p>
+                  <button type="button" onClick={() => { setCurrentPage(3)}}> ALL record </button>
+                  <button type="button" onClick={() => {setCurrentPage(4)}}> Your Record </button>
+                </div>)}
 
-      {pageNo === 3 && records.map((record) => (
+      {CurrentPage === 3 && allGameRecord.map((record) => (
          <div className="record-item">
-         <h3>{record.id}</h3>
-         <p>by {record.score}</p>
+         <h3>anon</h3>
+         <p>{record.score}</p>
          <p> {record.date}</p>
-         <p> {record.userId}</p>
        </div>
       )) }
-     {pageNo === 4 && userRecords.map((record) => (
-        <div className="-item">
-        <h3>{record.id}</h3>
-        <p>by {record.score}</p>
-        <p> {record.handle}</p>
-        <p> {record.date}</p>
-        <p> {record.userId}</p>
+     {CurrentPage === 4 && currentUserRecords.map((record) => (
+      
+        <div className="record-item">
+          {record.userId === userId && (
+      <>
+        <p>{record.handle}</p>
+        <p>{record.score}</p>
+        <p>{record.date}</p>
+        <button onClick={() => handleDelete(record.id)}>Delete</button>
+      </>
+    )}
       </div>
      ))}
-
             </div>
           )}
         </div>
