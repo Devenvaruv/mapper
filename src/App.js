@@ -3,38 +3,26 @@ import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber'
 import * as THREE from 'three'
 import { PointerLockControls } from '@react-three/drei'
 
-function Room() {
-  // Load 6 images as textures:
-  // Order: +x, -x, +y, -y, +z, -z
-  const textures = useLoader(THREE.TextureLoader, [
-    '/right.jpg',
-    '/left.jpg',
-    '/top.jpg',
-    '/bottom.jpg',
-    '/front.jpg',
-    '/back.jpg',
-  ])
-
-  // Return a <mesh> with a boxGeometry. We attach each texture
-  // to the box's face materials using material-0 to material-5
+function Room({ texturePaths = [], position = [0, 0, 0], size = 300 }) {
+  const textures = useLoader(THREE.TextureLoader, texturePaths)
   return (
-    <mesh>
-      {/* The box is 300×300×300 (in cm if 1 unit = 1cm) */}
-      <boxGeometry args={[300, 300, 300]} />
-      {/* Map each texture to its corresponding face index */}
-      {textures.map((texture, index) => (
+    <mesh position={position}>
+      <boxGeometry args={[size, size, size]} />
+      {textures.map((texture, i) => (
         <meshBasicMaterial
-          attach={`material-${index}`}
-          key={index}
+          attach={`material-${i}`}
+          key={i}
           map={texture}
-          side={THREE.BackSide} // so we see it from the inside
+          side={THREE.BackSide}
         />
       ))}
     </mesh>
   )
 }
 
-function Movement() {
+function Movement({ setCameraPos, cameraPos }) {
+  const { camera } = useThree()
+
   const [moveForward, setMoveForward] = useState(false)
   const [moveBackward, setMoveBackward] = useState(false)
   const [moveLeft, setMoveLeft] = useState(false)
@@ -43,9 +31,11 @@ function Movement() {
   const velocity = useRef(new THREE.Vector3())
   const direction = useRef(new THREE.Vector3())
 
-  const { camera } = useThree()
+  // Whenever cameraPos changes, update the actual camera in Three.js
+  useEffect(() => {
+    camera.position.set(...cameraPos)
+  }, [cameraPos, camera])
 
-  // Key events
   useEffect(() => {
     const onKeyDown = (e) => {
       switch (e.code) {
@@ -64,6 +54,15 @@ function Movement() {
         case 'KeyD':
         case 'ArrowRight':
           setMoveRight(true)
+          break
+        case 'KeyN':
+          console.log('Pressed N')
+          // Teleport to second cube
+          setCameraPos([600, 0, 0])
+          break
+        case 'KeyB':
+          console.log('Pressed B')
+          setCameraPos([0,0,0])
           break
         default:
           break
@@ -93,21 +92,18 @@ function Movement() {
     }
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
+
     return () => {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [])
+  }, [setCameraPos])
 
-  // Movement logic (runs every frame)
-  useFrame((state, delta) => {
-    const moveSpeed = 50 // cm per second
-
-    // Dampen velocity
+  useFrame((_, delta) => {
+    const moveSpeed = 50
     velocity.current.x -= velocity.current.x * 10.0 * delta
     velocity.current.z -= velocity.current.z * 10.0 * delta
 
-    // forward/back = z-axis, left/right = x-axis
     direction.current.z = Number(moveForward) - Number(moveBackward)
     direction.current.x = Number(moveRight) - Number(moveLeft)
     direction.current.normalize()
@@ -119,7 +115,7 @@ function Movement() {
       velocity.current.x -= direction.current.x * moveSpeed * delta
     }
 
-    // Figure out the camera’s facing direction
+    // Forward direction
     const forward = new THREE.Vector3()
     camera.getWorldDirection(forward)
     forward.y = 0
@@ -128,7 +124,6 @@ function Movement() {
     const right = new THREE.Vector3()
     right.crossVectors(camera.up, forward).normalize()
 
-    // Move the camera
     camera.position.addScaledVector(forward, -velocity.current.z * delta)
     camera.position.addScaledVector(right, velocity.current.x * delta)
   })
@@ -137,6 +132,25 @@ function Movement() {
 }
 
 export default function App() {
+  const [cameraPos, setCameraPos] = useState([0, 0, 0])
+
+  const cube1Textures = [
+    '/cube1/right.jpg',
+    '/cube1/left.jpg',
+    '/cube1/top.jpg',
+    '/cube1/bottom.jpg',
+    '/cube1/front.jpg',
+    '/cube1/back.jpg',
+  ]
+  const cube2Textures = [
+    '/cube2/Img_2_2048.jpg',
+    '/cube2/Img_0_2048.jpg',
+    '/cube2/Img_4_2048.jpg',
+    '/cube2/Img_5_2048.jpg',
+    '/cube2/Img_1_2048.jpg',
+    '/cube2/Img_3_2048.jpg',
+  ]
+
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       <Canvas
@@ -144,11 +158,17 @@ export default function App() {
           fov: 75,
           near: 0.1,
           far: 1000,
-          position: [0, 0, 0], // Start at the center of the cube
+          // We'll ignore this position after the first render,
+          // because we do setCameraPos() in code.
+          position: cameraPos,
         }}
       >
-        <Room />
-        <Movement />
+        <Room texturePaths={cube1Textures} position={[0, 0, 0]} size={300} />
+        <Room texturePaths={cube2Textures} position={[600, 0, 0]} size={300} />
+
+        {/* Pass both the cameraPos and setCameraPos to Movement */}
+        <Movement setCameraPos={setCameraPos} cameraPos={cameraPos} />
+
         <PointerLockControls />
       </Canvas>
     </div>
