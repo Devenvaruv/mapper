@@ -1,290 +1,157 @@
-import React, { useEffect, useState } from "react";
-import "./App.css";
-import axios from "axios";
+import React, { useEffect, useRef, useState } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import * as THREE from 'three'
+import { PointerLockControls } from '@react-three/drei'
 
-import { initializeApp } from "firebase/app";
-import { getAuth, signInWithRedirect, GoogleAuthProvider } from "firebase/auth";
-
-
-function App() {
-  const [phrases] = useState([
-    "Change the world from here",
-    "Be the change you wish to see",
-    "Turn your wounds into wisdom",
-  ]);
-  const [phrase, setPhrase] = useState("");
-  const [hiddenPhrase, setHiddenPhrase] = useState("");
-  const [previousGuesses, setPreviousGuesses] = useState("");
-  const [maxGuesses] = useState(5);
-  const [wrongGuesses, setWrongGuesses] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
-  const [solved, setSolved] = useState(false);
-  const [userName, setUserName] = useState("");
-  const [userId, setUserId] = useState("");
-  const [CurrentPage, setCurrentPage] = useState(0);
-  const [allGameRecord, setAllGameRecord] = useState([]);
-  const [currentUserRecords, setCurrentUserRecords] = useState([]);
-
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCfndJ5pcN5lfzyyTxlT0WbyBCTV0ktncM",
-    authDomain: "fir-test-58373.firebaseapp.com",
-    projectId: "fir-test-58373",
-    storageBucket: "fir-test-58373.appspot.com",
-    messagingSenderId: "971121072370",
-    appId: "1:971121072370:web:bdcdb9d48307b03f32586b",
-    measurementId: "G-BK9B9VWGFK",
-  };
-  initializeApp(firebaseConfig);
-
-  const signInWithGoogle = () => {
-    const provider = new GoogleAuthProvider();
-    const auth = getAuth();
-    signInWithRedirect(auth, provider)
-      .then((result) => {
-        // User signed in
-        console.log(result.user);
-      })
-      .catch((error) => {
-        // Handle Errors here.
-        console.error(error);
-      });
-  };
+function SkyBox() {
+  const { scene } = useThree()
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        // User is signed in.
-        console.log("User is signed in:", user);
-        setUserId(user.uid);
-      } else {
-        // No user is signed in.
-        console.log("No user is signed in.");
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
-  function showAllGameRecords() {
-    axios
-      .get("https://gamerecords-405919.wn.r.appspot.com/findAllGameRecord")
-      .then((response) => {
-        const sortedData = response.data.sort((a, b) => b.score - a.score);
-        setAllGameRecord(sortedData);
-        console.log(response);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }
-
-  function showCurrentUserRecord() {
-    axios
-      .get("https://gamerecords-405919.wn.r.appspot.com/findAllUserRecord")
-      .then((response) => {
-        setCurrentUserRecords(response.data);
-        console.log(response);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }
+    const loader = new THREE.CubeTextureLoader()
+    const texture = loader.load([
+      '/right.jpg',
+      '/left.jpg',
+      '/top.jpg',
+      '/bottom.jpg',
+      '/front.jpg',
+      '/back.jpg',
+    ])
+    scene.background = texture
+  }, [scene])
   
-
-  // Function to generate a hidden version of the phrase
-  const generateHiddenPhrase = (currentPhrase) => {
-    const updatedHiddenPhrase = currentPhrase
-      .split("")
-      .map((char) => (char.match(/[a-zA-Z]/) ? "*" : char))
-      .join("");
-    setHiddenPhrase(updatedHiddenPhrase);
-  };
-
-  // Function to process a player's guess
-  const processGuess = (guess) => {
-    if (previousGuesses.includes(guess.toLowerCase())) {
-      // Check if the guess has already been used
-      alert("You have already tried this.");
-      return;
-    }
-
-    if (phrase.toLowerCase().includes(guess.toLowerCase())) {
-      const updatedHiddenPhrase = hiddenPhrase
-        .split("")
-        .map((char, index) => {
-          if (phrase[index].toLowerCase() === guess.toLowerCase()) {
-            return phrase[index];
-          }
-          return char;
-        })
-        .join("");
-      setHiddenPhrase(updatedHiddenPhrase);
-
-      if (updatedHiddenPhrase.toLowerCase() === phrase.toLowerCase()) {
-        setGameOver(true); // The game is won
-        setSolved(true);
-      }
-    } else {
-      setWrongGuesses(wrongGuesses + 1);
-
-      if (wrongGuesses >= maxGuesses - 1) {
-        setGameOver(true); // The game is over
-      }
-    }
-
-    setPreviousGuesses(previousGuesses + guess.toLowerCase() + ",");
-  };
-  const userNameNameChange = (event) => {
-    setUserName(event.target.value);
-  };
-  const userNameSubmitName = () => {
-    const postData = {
-      handle: userName,
-      userId: userId,
-      score: maxGuesses - wrongGuesses,
-      date: new Date().toLocaleString(), 
-    }
-    const postDataTwo = {
-      userId: userId,
-      score: maxGuesses - wrongGuesses,
-      date: new Date().toLocaleString(), 
-    }
-
-    axios.post('https://gamerecords-405919.wn.r.appspot.com/saveUserRecord', postData)
-    .then(response => {
-      console.log('Data posted successfully:', response.data)
-    }).catch(error => {
-      console.error('Error posting data:', error);
-    })
-    axios.post('https://gamerecords-405919.wn.r.appspot.com/saveGameRecord', postDataTwo)
-    .then(response => {
-      console.log('Data posted successfully:', response.data)
-    }).catch(error => {
-      console.error('Error posting data:', error);
-    }) 
-    setCurrentPage(5)
-    showAllGameRecords();
-    showCurrentUserRecord();
-    console.log(allGameRecord);
-
-  };
-  const handleDelete = async (recordId) => {
-    try {
-      const response = await axios.delete(`https://gamerecords-405919.wn.r.appspot.com/deleteUserRecord`, { params: { id: recordId } });
-      console.log(response.data);
-      // Add your logic to handle the UI update or state change after deletion
-    } catch (error) {
-      console.error("Error deleting record: ", error);
-      // Handle error
-    }
-  };
-
-  // Function to start a new game
-  const newGame = () => {
-    // Reset all game state variables and select a new phrase
-    setHiddenPhrase("");
-    setPreviousGuesses("");
-    setWrongGuesses(0);
-    setGameOver(false);
-    setSolved(false);
-    setCurrentPage(0);
-    const randomIndex = Math.floor(Math.random() * phrases.length);
-    setPhrase(phrases[randomIndex]);
-    generateHiddenPhrase(phrases[randomIndex]);
-  };
-
-  //Component did mount
-  React.useEffect(() => {
-    newGame(); // Initialize the game with a random phrase
-  }, [phrases]);
-
-  return (
-    <>
-      {!userId && (
-        <button type="button" className="wofButton" onClick={signInWithGoogle}>
-          Sign in with Google
-        </button>
-      )}
-      {userId && (
-        <div className="App">
-          {!gameOver ? (
-            <div>
-              <h1>Wheel of Fortune</h1>
-              <div className="phrase">{hiddenPhrase}</div>
-              <div className="previous-guesses">
-                Previous Guesses: {previousGuesses}
-              </div>
-              <input
-                type="text"
-                maxLength="1"
-                onChange={(e) => {
-                  const guess = e.target.value;
-                  if (guess.match(/[a-zA-Z]/) && guess.length === 1) {
-                    processGuess(guess);
-                    e.target.value = "";
-                  } else {
-                    alert("Please enter Alphabet only");
-                    e.target.value = "";
-                  }
-                }}
-              />
-              <div className="wrong-guesses">Wrong Guesses: {wrongGuesses}</div>
-            </div>
-          ) : (
-            <div className="end-game-message">
-              {solved && CurrentPage === 0 && (<div className="win-message">YOU WON!!</div>)}
-              {!solved && CurrentPage === 0 && (<div className="lose-message">Game Over!</div>)}
-              {CurrentPage === 0 && (
-                <div>
-                  <p>do you want to save your game record?</p>
-                  <button type="button" onClick={() => { setCurrentPage(2)}}> Yes </button>
-                  <button type="button" onClick={() => {setCurrentPage(1)}}> No </button>
-                </div>
-              )}
-              {CurrentPage === 1 && <button onClick={newGame}>New Game</button>}
-
-              {CurrentPage === 2 && <div>
-        <label htmlFor="nameInput">Enter your name:</label>
-        <input
-          type="text"
-          id="nameInput"
-          value={userName}
-          onChange={userNameNameChange}
-        />
-        <button type="button" onClick={userNameSubmitName}>Submit Name</button>
-      </div>}
-      {CurrentPage === 5 && (<div>
-                  <p>do you want to view your record or all??</p>
-                  <button type="button" onClick={() => { setCurrentPage(3)}}> ALL record </button>
-                  <button type="button" onClick={() => {setCurrentPage(4)}}> Your Record </button>
-                </div>)}
-
-      {CurrentPage === 3 && allGameRecord.map((record) => (
-         <div className="record-item">
-         <h3>anon</h3>
-         <p>{record.score}</p>
-         <p> {record.date}</p>
-       </div>
-      )) }
-     {CurrentPage === 4 && currentUserRecords.map((record) => (
-      
-        <div className="record-item">
-          {record.userId === userId && (
-      <>
-        <p>{record.handle}</p>
-        <p>{record.score}</p>
-        <p>{record.date}</p>
-        <button onClick={() => handleDelete(record.id)}>Delete</button>
-      </>
-    )}
-      </div>
-     ))}
-            </div>
-          )}
-        </div>
-      )}
-    </>
-  );
+  return null
 }
 
-export default App;
+function RedDot() {
+  return (
+    <mesh position={[0, 0, 0]}>
+      <sphereGeometry args={[1, 16, 16]} />
+      <meshBasicMaterial color="red" />
+    </mesh>
+  )
+}
+
+function Movement({ setDistance }) {
+  const { camera } = useThree()
+  const [moveForward, setMoveForward] = useState(false)
+  const [moveBackward, setMoveBackward] = useState(false)
+  const [moveLeft, setMoveLeft] = useState(false)
+  const [moveRight, setMoveRight] = useState(false)
+  const velocity = useRef(new THREE.Vector3())
+  const direction = useRef(new THREE.Vector3())
+  
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      switch (e.code) {
+        case 'KeyW':
+        case 'ArrowUp':
+          setMoveForward(true)
+          break
+        case 'KeyS':
+        case 'ArrowDown':
+          setMoveBackward(true)
+          break
+        case 'KeyA':
+        case 'ArrowLeft':
+          setMoveLeft(true)
+          break
+        case 'KeyD':
+        case 'ArrowRight':
+          setMoveRight(true)
+          break
+        default:
+          break
+      }
+    }
+    const onKeyUp = (e) => {
+      switch (e.code) {
+        case 'KeyW':
+        case 'ArrowUp':
+          setMoveForward(false)
+          break
+        case 'KeyS':
+        case 'ArrowDown':
+          setMoveBackward(false)
+          break
+        case 'KeyA':
+        case 'ArrowLeft':
+          setMoveLeft(false)
+          break
+        case 'KeyD':
+        case 'ArrowRight':
+          setMoveRight(false)
+          break
+        default:
+          break
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keyup', onKeyUp)
+    }
+  }, [])
+  
+  useFrame((state, delta) => {
+    const moveSpeed = 100
+    velocity.current.x -= velocity.current.x * 10.0 * delta
+    velocity.current.z -= velocity.current.z * 10.0 * delta
+    direction.current.z = Number(moveForward) - Number(moveBackward)
+    direction.current.x = Number(moveRight) - Number(moveLeft)
+    direction.current.normalize()
+    if (moveForward || moveBackward) {
+      velocity.current.z -= direction.current.z * moveSpeed * delta
+    }
+    if (moveLeft || moveRight) {
+      velocity.current.x -= direction.current.x * moveSpeed * delta
+    }
+    const forward = new THREE.Vector3()
+    camera.getWorldDirection(forward)
+    forward.y = 0
+    forward.normalize()
+    const right = new THREE.Vector3()
+    right.crossVectors(camera.up, forward).normalize()
+    camera.position.addScaledVector(forward, -velocity.current.z * delta)
+    camera.position.addScaledVector(right, velocity.current.x * delta)
+
+    // Update the distance from the camera to the origin
+    const dist = camera.position.distanceTo(new THREE.Vector3(0, 0, 0))
+    setDistance(dist)
+  })
+  
+  return null
+}
+
+export default function App() {
+  const [distance, setDistance] = useState(0)
+
+  return (
+    <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+      <Canvas
+        camera={{
+          fov: 75,
+          near: 0.1,
+          far: 100000,
+          position: [0, 0, 100],
+        }}
+        style={{ width: '100%', height: '100%' }}
+      >
+        <SkyBox />
+        <RedDot />
+        <Movement setDistance={setDistance} />
+        <PointerLockControls />
+      </Canvas>
+      {/* Distance overlay rendered outside the Canvas */}
+      <div style={{
+        position: 'absolute',
+        top: 10,
+        left: 10,
+        color: '#fff',
+        fontFamily: 'sans-serif',
+        zIndex: 1
+      }}>
+        Distance: {distance.toFixed(2)} cm
+      </div>
+    </div>
+  )
+}
