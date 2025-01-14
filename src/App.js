@@ -229,7 +229,7 @@ export default function App() {
           return (
             <mesh key={i} position={[ localY, - localZ, 0]}>
               <sphereGeometry args={[1.5, 16, 16]} />
-              <meshBasicMaterial color="red" />
+              <meshBasicMaterial color="green" />
             </mesh>
           )
         })}
