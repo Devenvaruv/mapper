@@ -100,7 +100,7 @@ function Movement({ setCameraPos, cameraPos }) {
   }, [setCameraPos])
 
   useFrame((_, delta) => {
-    const moveSpeed = 50
+    const moveSpeed = 500
     velocity.current.x -= velocity.current.x * 10.0 * delta
     velocity.current.z -= velocity.current.z * 10.0 * delta
 
@@ -118,7 +118,7 @@ function Movement({ setCameraPos, cameraPos }) {
     // Forward direction
     const forward = new THREE.Vector3()
     camera.getWorldDirection(forward)
-    forward.y = 0
+    
     forward.normalize()
 
     const right = new THREE.Vector3()
@@ -135,14 +135,6 @@ export default function App() {
   const [cameraPos, setCameraPos] = useState([0, 0, 0])
 
   const cube1Textures = [
-    '/cube1/right.jpg',
-    '/cube1/left.jpg',
-    '/cube1/top.jpg',
-    '/cube1/bottom.jpg',
-    '/cube1/front.jpg',
-    '/cube1/back.jpg',
-  ]
-  const cube2Textures = [
     '/cube2/Img_2_2048.jpg',
     '/cube2/Img_0_2048.jpg',
     '/cube2/Img_4_2048.jpg',
@@ -151,23 +143,51 @@ export default function App() {
     '/cube2/Img_3_2048.jpg',
   ]
 
+  const img0Points = [
+    [964, 1058, 224],
+    [1040, 1058, 209],
+    [1059, 1058, 214],
+    [1062, 1058, 215],
+    [1035, 1060, 203],
+  ]
+
+  function PointsForImg0({ points }) {
+    // Each point is [x, y, z]
+    return (
+      <>
+        {points.map((coord, idx) => {
+          const [x, y, z] = coord
+          return (
+            <mesh key={idx} position={[x, y, z]}>
+              {/* A small sphere */}
+              <sphereGeometry args={[1, 16, 16]} />
+              {/* Color them any way you like */}
+              <meshBasicMaterial color="red" />
+            </mesh>
+          )
+        })}
+      </>
+    )
+  }
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       <Canvas
         camera={{
           fov: 75,
           near: 0.1,
-          far: 1000,
+          far: 3000,
           // We'll ignore this position after the first render,
           // because we do setCameraPos() in code.
           position: cameraPos,
         }}
       >
-        <Room texturePaths={cube1Textures} position={[0, 0, 0]} size={300} />
-        <Room texturePaths={cube2Textures} position={[600, 0, 0]} size={300} />
-
+        <Room texturePaths={cube1Textures} position={[0, 0, 0]} size={640} />
+        
         {/* Pass both the cameraPos and setCameraPos to Movement */}
         <Movement setCameraPos={setCameraPos} cameraPos={cameraPos} />
+
+        {/* Visualize points for img_0 */}
+        <PointsForImg0 points={img0Points} />
 
         <PointerLockControls />
       </Canvas>
