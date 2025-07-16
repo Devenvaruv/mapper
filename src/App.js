@@ -5,12 +5,12 @@ import { Billboard, Text, PointerLockControls } from "@react-three/drei";
 
 function getCubeTextures(mainFolder, subFolderName, index) {//_newImg_0_2048
   return [
-    `/${mainFolder}/${subFolderName}_${index}/Hunter_T1_${index}_newImg_2_2048.jpg`, // Front
-    `/${mainFolder}/${subFolderName}_${index}/Hunter_T1_${index}_newImg_0_2048.jpg`, // Back
-    `/${mainFolder}/${subFolderName}_${index}/Hunter_T1_${index}_newImg_4_2048.jpg`, // Top
-    `/${mainFolder}/${subFolderName}_${index}/Hunter_T1_${index}_newImg_5_2048.jpg`, // Bottom
-    `/${mainFolder}/${subFolderName}_${index}/Hunter_T1_${index}_newImg_1_2048.jpg`, // Right
-    `/${mainFolder}/${subFolderName}_${index}/Hunter_T1_${index}_newImg_3_2048.jpg`, // Left
+    `/${mainFolder}/${subFolderName}_${index}/Img_2_2048.jpg`, // Front
+    `/${mainFolder}/${subFolderName}_${index}/Img_0_2048.jpg`, // Back
+    `/${mainFolder}/${subFolderName}_${index}/Img_4_2048.jpg`, // Top
+    `/${mainFolder}/${subFolderName}_${index}/Img_5_2048.jpg`, // Bottom
+    `/${mainFolder}/${subFolderName}_${index}/Img_1_2048.jpg`, // Right
+    `/${mainFolder}/${subFolderName}_${index}/Img_3_2048.jpg`, // Left
   ];
 }
 
@@ -282,7 +282,7 @@ export default function App() {
   const assets = require("./json/Data_Hunter_RD.json");
   const mainFolderName = "Hunter_T1" // root folder in /public
   const subFolderName = "Hunter_T1"
-  const [currentCubeIndex, setCurrentCubeIndex] = useState(829);
+  const [currentCubeIndex, setCurrentCubeIndex] = useState(440);
   
   const glRef = useRef(null);
   const [cameraPos, setCameraPos] = useState([0, 0, 0]);
